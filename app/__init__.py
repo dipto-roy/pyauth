@@ -1,0 +1,3 @@
+"""
+PyAuth - FastAPI Authentication Application
+"""
