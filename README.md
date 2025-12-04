@@ -1,16 +1,31 @@
-# FastAPI Authentication & Authorization
+# PyAuth - FastAPI Authentication & Authorization
 
-A production-ready FastAPI skeleton with JWT authentication, role-based authorization, SQLAlchemy ORM, and PostgreSQL.
+A production-ready FastAPI authentication system with JWT tokens, role-based authorization, SQLAlchemy ORM, and PostgreSQL.
 
-## Features
+**Author:** Dip Roy
 
-- 🔐 JWT-based authentication (access tokens with expiration)
-- 👥 Role-based authorization (user/admin roles)
-- 🗄️ PostgreSQL database with SQLAlchemy ORM
-- 🔄 Alembic migrations
-- 🔒 Secure password hashing (bcrypt via passlib)
-- 🐳 Docker Compose for local development
-- ✅ Pytest test suite
+## ✨ Features
+
+- 🔐 **JWT Authentication** - Access tokens with configurable expiration (default: 15 min)
+- 👥 **Role-Based Authorization** - User and Admin roles with protected endpoints
+- 🗄️ **PostgreSQL + SQLAlchemy** - Modern ORM with type hints
+- 🔄 **Alembic Migrations** - Database version control
+- 🔒 **Secure Password Hashing** - bcrypt via passlib
+- ✅ **21 Pytest Tests** - Full test coverage for auth flows
+- 📝 **Pydantic Validation** - Request/response validation
+- 🌐 **CORS Enabled** - Ready for frontend integration
+
+## 🛠️ Tech Stack
+
+| Category   | Technology                          |
+| ---------- | ----------------------------------- |
+| Framework  | FastAPI 0.123+                      |
+| Database   | PostgreSQL + SQLAlchemy 2.0         |
+| Auth       | python-jose (JWT), passlib (bcrypt) |
+| Migrations | Alembic                             |
+| Validation | Pydantic 2.x                        |
+| Testing    | Pytest + HTTPX                      |
+| Server     | Uvicorn                             |
 
 ## Project Structure
 
@@ -19,20 +34,20 @@ pyauth/
 ├── app/
 │   ├── api/
 │   │   ├── __init__.py
-│   │   ├── auth.py          # Register & Login endpoints
-│   │   └── protected.py     # Protected routes
+│   │   ├── auth.py          # /auth/register & /auth/login endpoints
+│   │   └── protected.py     # /protected/user & /protected/admin routes
 │   ├── core/
 │   │   ├── __init__.py
-│   │   ├── config.py        # Settings from environment
-│   │   └── security.py      # Password hashing & JWT utils
+│   │   ├── config.py        # Pydantic settings (loads .env)
+│   │   └── security.py      # bcrypt hashing & python-jose JWT
 │   ├── db/
 │   │   ├── __init__.py
-│   │   └── session.py       # Database session management
+│   │   └── session.py       # SQLAlchemy engine & session factory
 │   ├── __init__.py
-│   ├── crud.py              # Database operations
-│   ├── deps.py              # FastAPI dependencies
-│   ├── models.py            # SQLAlchemy models
-│   └── schemas.py           # Pydantic schemas
+│   ├── crud.py              # get_user_by_email, create_user, authenticate_user
+│   ├── deps.py              # get_current_user, require_role dependencies
+│   ├── models.py            # User model with UserRole enum (USER, ADMIN)
+│   └── schemas.py           # Pydantic request/response schemas
 ├── alembic/
 │   ├── versions/
 │   │   └── 001_create_users_table.py
@@ -40,44 +55,62 @@ pyauth/
 │   └── script.py.mako
 ├── tests/
 │   ├── __init__.py
-│   ├── conftest.py
-│   └── test_auth.py
-├── alembic.ini
-├── docker-compose.yml
-├── .env.example
+│   ├── conftest.py          # Test fixtures & in-memory SQLite DB
+│   └── test_auth.py         # 21 comprehensive auth tests
+├── .env                     # Your environment variables (git-ignored)
 ├── .gitignore
-├── Makefile
+├── alembic.ini
+├── docker-compose.yml       # Optional: PostgreSQL container
+├── Makefile                 # make run, make test, etc.
 ├── requirements.txt
 └── README.md
 ```
 
 ## Quick Start
 
-### 1. Clone and Setup Environment
+### 1. Clone and Setup
 
 ```bash
-# Copy environment variables
-cp .env.example .env
+cd pyauth
 
-# Edit .env and set a strong SECRET_KEY
-# You can generate one with: openssl rand -hex 32
-```
-
-### 2. Start PostgreSQL with Docker Compose
-
-```bash
-docker-compose up -d
-```
-
-### 3. Install Dependencies
-
-```bash
 # Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+
+Create a `.env` file in the project root:
+
+```bash
+# Generate a secure secret key
+openssl rand -hex 32
+```
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/pyauth
+SECRET_KEY=your-256-bit-secret-key-here
+ACCESS_TOKEN_EXPIRE_MINUTES=15
+```
+
+> ⚠️ **Important:** `DATABASE_URL` and `SECRET_KEY` have no defaults and must be set.
+
+### 3. Setup PostgreSQL
+
+**Option A: Local PostgreSQL**
+
+```bash
+# Create database
+psql -U postgres -c "CREATE DATABASE pyauth;"
+```
+
+**Option B: Docker Compose**
+
+```bash
+docker-compose up -d
 ```
 
 ### 4. Run Database Migrations
@@ -162,34 +195,57 @@ pytest --cov=app
 
 ## Environment Variables
 
-| Variable                      | Description                                  | Default                                                |
-| ----------------------------- | -------------------------------------------- | ------------------------------------------------------ |
-| `DATABASE_URL`                | PostgreSQL connection string                 | `postgresql://postgres:postgres@localhost:5432/pyauth` |
-| `SECRET_KEY`                  | JWT signing key (use a strong random string) | Required                                               |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration time                        | `15`                                                   |
+| Variable                      | Description                                                                         | Required         |
+| ----------------------------- | ----------------------------------------------------------------------------------- | ---------------- |
+| `DATABASE_URL`                | PostgreSQL connection string (e.g., `postgresql://user:pass@localhost:5432/pyauth`) | ✅ Yes           |
+| `SECRET_KEY`                  | JWT signing key (256-bit hex string recommended)                                    | ✅ Yes           |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token expiration time in minutes                                                    | No (default: 15) |
+
+> Generate a secure secret key: `openssl rand -hex 32`
 
 ## Development Commands
 
 ```bash
-make run        # Start development server
-make test       # Run tests
-make migrate    # Run migrations
+make run        # Start development server (uvicorn --reload)
+make test       # Run all 21 tests with pytest
+make migrate    # Run alembic upgrade head
 make revision   # Create new migration (edit message in Makefile)
 ```
 
 ## Creating an Admin User
 
-By default, users are created with the 'user' role. To create an admin user, you can:
-
-1. Register a user normally
-2. Update their role in the database:
+By default, users register with the `user` role. To promote a user to admin:
 
 ```sql
 UPDATE users SET role = 'admin' WHERE email = 'admin@example.com';
 ```
 
-Or modify the registration endpoint to accept a role parameter (for development only).
+## Security Notes
+
+- Passwords are hashed with **bcrypt** (12 rounds)
+- JWT tokens use **HS256** algorithm
+- Tokens contain user ID in the `sub` claim (as string per RFC 7519)
+- `SECRET_KEY` and `DATABASE_URL` must be set in `.env` (no defaults)
+- `.env` is git-ignored to prevent accidental commits
+
+## Test Coverage
+
+All 21 tests cover:
+
+- User registration (valid, duplicate email, weak password)
+- User login (valid, wrong email/password)
+- JWT token validation and expiration
+- Protected endpoint access control
+- Admin-only endpoint authorization
+- Token format and error handling
+
+Run tests:
+
+```bash
+pytest -v
+# Output: 21 passed ✅
+```
 
 ## License
 
-Dip
+MIT License - Dip Roy
