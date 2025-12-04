@@ -192,4 +192,4 @@ Or modify the registration endpoint to accept a role parameter (for development 
 
 ## License
 
-MIT
+Dip

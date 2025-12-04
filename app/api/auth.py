@@ -106,9 +106,10 @@ async def login(
         )
     
     # Create access token with user ID and role in payload
+    # Note: JWT 'sub' claim must be a string per RFC 7519
     access_token = create_access_token(
         data={
-            "sub": user.id,
+            "sub": str(user.id),
             "role": user.role.value,
         }
     )

@@ -20,8 +20,13 @@ class Settings(BaseSettings):
         ALGORITHM: JWT signing algorithm
     """
     
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/pyauth"
-    SECRET_KEY: str = "your-super-secret-key-change-in-production"
+    # Database - no default, must be set in .env
+    DATABASE_URL: str
+    
+    # Security - no default, must be set in .env for production safety
+    SECRET_KEY: str
+    
+    # Token settings
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     ALGORITHM: str = "HS256"
     

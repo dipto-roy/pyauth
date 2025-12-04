@@ -65,11 +65,17 @@ async def get_current_user(
         logger.warning("Invalid or expired token")
         raise credentials_exception
     
-    # Extract user ID from token
-    user_id: int | None = payload.get("sub")
+    # Extract user ID from token (stored as string per JWT spec)
+    user_id_str: str | None = payload.get("sub")
     
-    if user_id is None:
+    if user_id_str is None:
         logger.warning("Token missing 'sub' claim")
+        raise credentials_exception
+    
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
+        logger.warning(f"Invalid user ID in token: {user_id_str}")
         raise credentials_exception
     
     # Load user from database

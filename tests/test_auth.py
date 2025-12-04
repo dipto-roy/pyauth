@@ -289,7 +289,8 @@ class TestTokenExpiration:
         )
         
         assert "sub" in payload
-        assert payload["sub"] == test_user.id
+        # sub is stored as string per JWT spec
+        assert payload["sub"] == str(test_user.id)
         assert "role" in payload
         assert payload["role"] == "user"
         assert "exp" in payload
